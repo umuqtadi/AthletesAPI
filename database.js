@@ -9,7 +9,6 @@ let database = new sqlite3.Database('./database.db')
 //sport_id
 //position
 //number
-//city
 
 //City Table
 //Name of city
@@ -20,7 +19,7 @@ let database = new sqlite3.Database('./database.db')
 //City ID
 
 const createTableSportsQuery = "CREATE TABLE IF NOT EXISTS sports (name TEXT)"
-const createTableAthletesQuery = "CREATE TABLE IF NOT EXISTS athletes (name TEXT, sport_id INTEGER, position TEXT, number INTEGER, city TEXT)"
+const createTableAthletesQuery = "CREATE TABLE IF NOT EXISTS athletes (name TEXT, sport_id INTEGER, position TEXT, number INTEGER)"
 const createTableCitiesQuery = "CREATE TABLE IF NOT EXISTS cities (name TEXT)"
 const createTableCitiesAthletesQuery = "CREATE TABLE IF NOT EXISTS cities_athletes (city_id INTEGER, athlete_id INTEGER)"
 

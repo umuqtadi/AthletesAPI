@@ -125,10 +125,10 @@ app.post('/api/athletes', (req, res)=> {
     database.run(addAthleteQuery, [req.body.name, req.body.sport_id, req.body.position, req.body.number, req.body.city], (err)=> {
         if(err) {
             console.log('Add athlete failed')
-            response.sendStatus(500)
+            res.sendStatus(500)
         } else {
             console.log('Add athlete successful')
-            response.sendStatus(200)
+            res.sendStatus(200)
         }
     })
 })
@@ -140,10 +140,10 @@ app.put('/api/athletes/:id', (req, res)=> {
     database.run(updateAthleteQuery, [req.body.name, req.body.sport_id, req.body.position, req.body.number, req.body.city], err => {
         if(err) {
             console.log('Update athlete failed!')
-            response.sendStatus(500)
+            res.sendStatus(500)
         } else {
             console.log('Update athlete successful')
-            response.sendStatus(200)
+            res.sendStatus(200)
         }
     })
 })
@@ -155,10 +155,10 @@ app.delete('/api/athletes/:id', (req, res)=> {
     database.run(deleteAthleteQuery, [athleteId], err => {
         if(err) {
             console.log('Delete athlete failed')
-            response.sendStatus(500)
+            res.sendStatus(500)
         } else {
             console.log('Delete athlete successful')
-            response.sendStatus(200)
+            res.sendStatus(200)
         }
     })
 })
@@ -176,12 +176,12 @@ app.get('/api/cities', (req, res)=> {
             res.sendStatus(500)
         } else {
             console.log('Get cities successful')
-            respo.sendStatus(200).json(results)
+            res.status(200).json(results)
         }
     })
 })
 
-app.get('/api/cities/id', (req, res)=> {
+app.get('/api/cities/:id', (req, res)=> {
     const cityId = req.params.id
     let getOneCityQuery = 'SELECT * FROM cities WHERE cities.oid = ?'
 
@@ -191,12 +191,125 @@ app.get('/api/cities/id', (req, res)=> {
             res.sendStatus(500)
         } else {
             console.log('Get one city successful')
+            res.status(200).json(results)
+        }
+    })
+})
+
+app.post('/api/cities', (req, res)=> {
+    const addOneCityQuery = 'INSERT INTO cities (name) VALUES (?)'
+
+    database.run(addOneCityQuery, [req.body.name], (err)=> {
+        if(err) {
+            console.log('Adding city failed')
+            res.sendStatus(500)
+        } else {
+            console.log('Add city successful')
             res.sendStatus(200)
         }
     })
 })
 
+app.put('/api/cities/:id', (req, res)=> {
+    const cityId = req.params.id
+    const updateCityQuery = `UPDATE cities SET NAME = ? WHERE cities.oid = ${cityId}`
 
+    database.run(updateCityQuery, [req.body.name], (err)=> {
+        if(err) {
+            console.log('Update city failed')
+            res.sendStatus(500)
+        } else {
+            console.log('Update city successful')
+            res.sendStatus(200)
+        }
+    })
+})
+
+app.delete('/api/cities/:id', (req, res)=> {
+    const cityId = req.params.id
+    const deleteCityQuery = `DELETE FROM cities WHERE cities.oid = ?`
+
+    database.run(deleteCityQuery, [cityId], err => {
+        if(err) {
+            console.log('Delete city failed')
+            res.sendStatus(500)
+        } else {
+            console.log('Deleted city successfully')
+            res.sendStatus(200)
+        }
+    })
+})
+
+///////////////////////////////////////////////////////////////////////////
+//////////////////////////////Cities_Athletes//////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+app.get('/api/cities/:id/athletes', (req, res)=> {
+    const cityId = req.params.id
+    const joinCityAthletesQuery = 
+    `SELECT cities.name, athletes.name, athletes.number FROM cities
+    JOIN cities_athletes ON cities.oid = cities_athletes.city_id 
+    JOIN athletes ON athletes.oid = cities_athletes.athlete_id 
+    WHERE cities_athletes.city_id = (?)`
+
+    database.all(joinCityAthletesQuery, [cityId], (err, results)=> {
+        if(err) {
+            console.log(`Getting athletes of cities failed`)
+            res.sendStatus(500)
+        } else {
+            console.log('Getting athletes from city successful')
+            res.status(200).json(results)
+        }
+    })
+})
+
+app.get('/api/athletes/:id/cities', (req, res)=> {
+    const athleteId = req.params.id
+    const joinAthleteCityQuery = `SELECT athletes.name, athletes.number, cities.name FROM athletes
+    JOIN cities_athletes ON athletes.oid = cities_athletes.athlete_id
+    JOIN cities ON cities.oid = cities_athletes.city_id
+    WHERE cities_athletes.athlete_id = ?`
+
+    database.all(joinAthleteCityQuery, [athleteId], (err, results)=> {
+        if(err) {
+            console.log('Getting cities of athletes failed')
+            res.sendStatus(500)
+        } else {
+            console.log('Getting join succesful')
+            res.status(200).json(results)
+        }
+    })
+})
+
+app.post('/api/cities/:id/athletes', (req, res)=> {
+    const insertParams = [req.params.id, req.body.athlete_id]
+    const insertCityAthleteQuery = `INSERT INTO cities_athletes VALUES (?,?)`
+
+    database.run(insertCityAthleteQuery, insertParams, err => {
+        if(err) {
+            console.log('Adding join failed')
+            res.sendStatus(500)
+        } else {
+            console.log('Adding to join table success!')
+            res.sendStatus(200)
+        }
+    })
+})
+
+app.delete('/api/cities/:id/athletes', (req, res)=> {
+    const cityId = req.params.id
+    const deleteJoinQuery = `DELETE * FROM cities_athletes WHERE cities_athletes.oid = ?`
+
+    database.run(deleteJoinQuery, [cityId], (err) => {
+        if(err) {
+            console.log(`Delete join entry failed`)
+            res.sendStatus(500)
+        } else {
+            console.log('Delete join successful')
+            res.sendStatus(200)
+        }
+    })
+})
 
 //Listening on
 app.listen(port, ()=> {
