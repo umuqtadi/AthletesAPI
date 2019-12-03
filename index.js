@@ -86,9 +86,9 @@ app.put('/api/sports/:id', (req, res)=> {
     })
 })
 
-///////////////////////////
-///Athletes table routes///
-//////////////////////////
+//////////////////////////////
+///Athletes table routes/////
+/////////////////////////////
 
 app.get('/api/athletes', (req, res)=> {
     const getAllAthletesQuery = `SELECT * FROM athletes`
@@ -114,6 +114,24 @@ app.get('/api/athletes/:id', (req, res)=> {
             res.sendStatus(500)
         } else {
             console.log('Get athlete succeeded')
+            res.status(200).json(results)
+        }
+    })
+})
+
+app.get('/api/athletes/:id/sports', (req, res)=> {
+    const athleteId = req.params.id
+    const getAthleteSportQuery = 
+    `SELECT athletes.name, sports.name AS "sport" FROM athletes
+    JOIN sports ON sports.oid = athletes.sport_id
+    WHERE athletes.oid = ?`
+
+    database.all(getAthleteSportQuery, [athleteId], (err, results)=> {
+        if(err) {
+            console.log('Could not get sport of athlete')
+            res.sendStatus(500)
+        } else {
+            console.log('Get sport played by athlete success')
             res.status(200).json(results)
         }
     })
@@ -247,7 +265,7 @@ app.delete('/api/cities/:id', (req, res)=> {
 app.get('/api/cities/:id/athletes', (req, res)=> {
     const cityId = req.params.id
     const joinCityAthletesQuery = 
-    `SELECT cities.name, athletes.name, athletes.number FROM cities
+    `SELECT cities.name AS "city", athletes.name, athletes.number FROM cities
     JOIN cities_athletes ON cities.oid = cities_athletes.city_id 
     JOIN athletes ON athletes.oid = cities_athletes.athlete_id 
     WHERE cities_athletes.city_id = (?)`
@@ -265,7 +283,7 @@ app.get('/api/cities/:id/athletes', (req, res)=> {
 
 app.get('/api/athletes/:id/cities', (req, res)=> {
     const athleteId = req.params.id
-    const joinAthleteCityQuery = `SELECT athletes.name, athletes.number, cities.name FROM athletes
+    const joinAthleteCityQuery = `SELECT athletes.name AS "athlete", athletes.number, cities.name FROM athletes
     JOIN cities_athletes ON athletes.oid = cities_athletes.athlete_id
     JOIN cities ON cities.oid = cities_athletes.city_id
     WHERE cities_athletes.athlete_id = ?`
@@ -296,11 +314,26 @@ app.post('/api/cities/:id/athletes', (req, res)=> {
     })
 })
 
-app.delete('/api/cities/:id/athletes', (req, res)=> {
-    const cityId = req.params.id
-    const deleteJoinQuery = `DELETE * FROM cities_athletes WHERE cities_athletes.oid = ?`
+app.put('/api/cities/:id/athletes', (req, res)=> {
+    const cities_athletesId = req.params.id
+    const updateCityAthleteQuery = `UPDATE cities_athletes SET city_id = ?, athlete_id = ? WHERE cities_athletes.oid = ${cities_athletesId}`
 
-    database.run(deleteJoinQuery, [cityId], (err) => {
+    database.run(updateCityAthleteQuery, [req.body.city_id, req.body.athlete_id], (err)=> {
+        if(err) {
+            console.log('Update join table failed')
+            res.sendStatus(500)
+        } else {
+            console.log('Update join successful')
+            res.sendStatus(200)
+        }
+    })
+})
+
+app.delete('/api/cities/:id/athletes', (req, res)=> {
+    const cities_athletesId = req.params.id
+    const deleteJoinQuery = `DELETE FROM cities_athletes WHERE cities_athletes.oid = ?`
+
+    database.run(deleteJoinQuery, [cities_athletesId], (err) => {
         if(err) {
             console.log(`Delete join entry failed`)
             res.sendStatus(500)
