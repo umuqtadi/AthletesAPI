@@ -88,3 +88,10 @@ Delete request will delete the join at the specific ID you provide.
 **/api/athletes/:id/cities**
 
 Get request will get you all the cities that an athlete has played in.
+
+
+## Technologies Used
+
+**Express, SQL, Node, Javascript**
+
+## G-UNIT Productions
