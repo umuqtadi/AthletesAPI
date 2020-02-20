@@ -4,6 +4,13 @@ const database = require('./database.js');
 const app = express();
 
 //Middleware
+app.use((req, res, next)=> {
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.setHeader('Access-Control-Allow-Methods', '*')
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept')
+    next()
+})
+
 app.use(express.json());
 
 const port = 8000;
@@ -95,7 +102,7 @@ app.put('/api/sports/:id', (req, res)=> {
 /////////////////////////////
 
 app.get('/api/athletes', (req, res)=> {
-    const getAllAthletesQuery = `SELECT * FROM athletes`
+    const getAllAthletesQuery = `SELECT *, athletes.oid FROM athletes`
 
     database.all(getAllAthletesQuery, (error, results)=> {
         if(error) {
@@ -142,30 +149,56 @@ app.get('/api/athletes/:id/sports', (req, res)=> {
 })
 
 app.post('/api/athletes', (req, res)=> {
-    const addAthleteQuery = 'INSERT INTO athletes (name, sport_id, position, number, city) VALUES (?,?,?,?,?)'
+    const addAthleteQuery = 'INSERT INTO athletes (name, sport_id, position, number) VALUES (?,?,?,?)'
 
-    database.run(addAthleteQuery, [req.body.name, req.body.sport_id, req.body.position, req.body.number, req.body.city], (err)=> {
+    console.log(req.body);
+
+    database.run(addAthleteQuery, [req.body.name, req.body.sport_id, req.body.position, req.body.number], (err)=> {
         if(err) {
             console.log('Add athlete failed')
             res.sendStatus(500)
         } else {
             console.log('Add athlete successful')
-            res.sendStatus(200)
+            const getAllAthletesQuery = `SELECT * FROM athletes`
+
+            database.all(getAllAthletesQuery, (error, results)=> {
+                if(error) {
+                    console.log('Get all athletes failed')
+                    res.sendStatus(500)
+                } else {
+                    console.log('Get all athletes success')
+                    res.status(200).json(results)
+                }
+            })
         }
     })
 })
 
 app.put('/api/athletes/:id', (req, res)=> {
     const athleteId = req.params.id
-    const updateAthleteQuery = `UPDATE athletes SET NAME = ?, SPORT_ID = ?, POSITION = ?, NUMBER = ?, CITY = ? WHERE athletes.oid = ${athleteId}`
-
-    database.run(updateAthleteQuery, [req.body.name, req.body.sport_id, req.body.position, req.body.number, req.body.city], err => {
+    console.log(athleteId)
+    const updateAthleteQuery = `UPDATE athletes SET name = ?, sport_id = ?, position = ?, number = ? WHERE athletes.oid = ${athleteId}`
+    console.log(req.body)
+    database.run(updateAthleteQuery, [req.body.name, req.body.sport_id, req.body.position, req.body.number], (err) => {
+        // console.log('the body'+req.body)
+        // console.log(this)
+        // console.log(err)
         if(err) {
-            console.log('Update athlete failed!')
+            console.log('Update athlete failed!', err)
             res.sendStatus(500)
         } else {
             console.log('Update athlete successful')
-            res.sendStatus(200)
+            const getAllAthletesQuery = `SELECT * FROM athletes`
+
+            database.all(getAllAthletesQuery, (error, results)=> {
+                if(error) {
+                    console.log('Get all athletes failed')
+                    res.sendStatus(500)
+                } else {
+                    console.log('Get all athletes success')
+                    res.status(200).json(results)
+                }
+            })
         }
     })
 })
